@@ -82,7 +82,7 @@ export const ThemePanel = () => {
     {themes.length ? <div className="theme-options">{themes.map(theme=>{
       const active=theme.id===current?.id;
       const colors=theme.palette ?? {page:theme.background ?? '#f2eee6',text:'#13110f',accent:'#955905'};
-      return <button key={theme.id} className={`theme-option${active?' active':''}`} aria-label={theme.label} aria-pressed={active}
+      return <button key={theme.id} className={`theme-option${active?' active':''}`} aria-label={themeLabel(theme.label)} aria-pressed={active}
         onClick={()=>{const store=useStore.getState();store.setPreview(null);if(!active)store.setProject(switchTheme(store.project,MANIFEST,theme.id));}}>
         <span className="theme-palette" aria-hidden="true">{[colors.page,colors.surface ?? colors.page,colors.accent].map((c,i)=><span key={i} style={{background:c}} />)}</span>
         <span className="theme-option-label"><strong>{themeLabel(theme.label)}</strong><span>{active?'✓':''}</span></span>

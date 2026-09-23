@@ -194,7 +194,7 @@ export const LibraryPanel: React.FC = () => {
       meta={`${(card.durationInFrames / cardFps(card)).toFixed(1)}s${card.schema.length > 0 ? t("lib.tunable") : ""}`}
       title={cardSummary(card)}
       onClick={() => setPreview({ kind: "card", cardId: card.id })}
-      payload={{ cardId: card.id, label: cardName(card) }}
+      payload={{ cardId: card.id }}
     >
       {card.preview ? <LazyLoopVideo src={`/${card.preview}`} /> : <LazyCardLoop card={card} />}
     </Cell>
@@ -297,7 +297,7 @@ export const LibraryPanel: React.FC = () => {
                       name={cardName(card)}
                       meta={`${(card.durationInFrames / cardFps(card)).toFixed(1)}s${card.schema.length ? t("lib.tunable") : ""}`}
                       onClick={() => setPreview({ kind: "card", cardId: card.id })}
-                      payload={{ cardId: card.id, label: cardName(card) }}
+                      payload={{ cardId: card.id }}
                     >
                       <LazyCardLoop card={card} />
                     </Cell>

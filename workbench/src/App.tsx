@@ -6,7 +6,7 @@ import { Timeline } from "./timeline/Timeline";
 import { resetProject, useStore } from "./store";
 import { seekTo, togglePlay } from "./playerRef";
 import type { ProjectData } from "./types";
-import { useLocale, useT } from "./i18n";
+import { applyLocaleToDocument, useLocale, useT } from "./i18n";
 
 const isEditable = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
@@ -115,7 +115,9 @@ const ExportButton: React.FC = () => {
 
 export const App: React.FC = () => {
   const t = useT();
+  const locale = useLocale((s) => s.locale);
   const toggleLocale = useLocale((s) => s.toggleLocale);
+  useEffect(() => applyLocaleToDocument(locale), [locale]);
   const project = useStore((s) => s.project);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
@@ -206,6 +208,7 @@ export const App: React.FC = () => {
         >
           {t("reset")}
         </button>
+        <span className="tl-sep" />
         <button className="btn" onClick={toggleLocale} title={t("lang.switchTitle")}>
           {t("lang.switchLabel")}
         </button>

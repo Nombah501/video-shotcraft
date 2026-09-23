@@ -20,8 +20,8 @@ const readSaved = (): Locale => {
     return "en";
   }
 };
-const applyToDocument = (l: Locale) => {
-  if (typeof document === "undefined") return;
+/** 只由工作台 App 调用（useEffect）：Remotion Studio / 渲染 bundle 也会加载本模块，不能在这里改页面 */
+export const applyLocaleToDocument = (l: Locale) => {
   document.documentElement.lang = l === "zh" ? "zh-CN" : "en";
   document.title = STRINGS[l]["app.title"];
 };
@@ -30,7 +30,6 @@ export const useLocale = create<{ locale: Locale; setLocale: (l: Locale) => void
   locale: readSaved(),
   setLocale: (l) => {
     try { localStorage.setItem(STORAGE_KEY, l); } catch { /* 隐私模式等：只在本次会话生效 */ }
-    applyToDocument(l);
     set({ locale: l });
   },
   toggleLocale: () => get().setLocale(get().locale === "zh" ? "en" : "zh"),
@@ -197,9 +196,6 @@ const EN = {
   "track.new": "Track {n}",
 
   "demo.name": "Untitled project",
-  "demo.titleCard": "Title card",
-  "demo.counter": "Counter confetti",
-  "demo.crash": "Crash zoom",
 } as const;
 
 export type StringKey = keyof typeof EN;
@@ -362,9 +358,6 @@ const ZH: Record<StringKey, string> = {
   "track.new": "轨道 {n}",
 
   "demo.name": "未命名工程",
-  "demo.titleCard": "字卡",
-  "demo.counter": "数字冲刺纸屑",
-  "demo.crash": "急推撞停",
 };
 
 export const STRINGS: Record<Locale, Record<StringKey, string>> = { en: EN, zh: ZH };
@@ -399,6 +392,7 @@ const LABELS_ZH_EN: Record<string, string> = {
   "镜头": "Shots",
   "音乐": "Music",
   "音效": "SFX",
+  "轨道": "Track",
   "组件": "Component",
   // 工作台原生卡
   "通用文字": "Basic text",
@@ -412,9 +406,6 @@ const LABELS_ZH_EN: Record<string, string> = {
   "字卡": "Title card",
   "解说字幕条": "Caption strip",
   "暖白闪转场": "Warm flash cut",
-  // 演示工程的默认片段标签（demoProject 按当前语言生成，切换后靠这里对翻）
-  "数字冲刺纸屑": "Counter confetti",
-  "急推撞停": "Crash zoom",
   // schema 字段 / 选项
   "底色": "Fill color",
   "亮斑强度": "Glow strength",
@@ -511,11 +502,11 @@ const LABELS_ZH_EN: Record<string, string> = {
 const LABELS_EN_ZH: Record<string, string> = Object.fromEntries(
   Object.entries(LABELS_ZH_EN).map(([zh, en]) => [en, zh]),
 );
-// 带数字的模式：新建轨道 / 闪白转场标签
+// 带数字的标签：「轨道 3」「音效 2」「Track 3」「SFX 2」→ 前缀查词典、数字照抄；闪白转场标签单独一条
 const PATTERNS: [RegExp, string, RegExp, string][] = [
-  [/^轨道 (\d+)$/, "Track $1", /^Track (\d+)$/, "轨道 $1"],
   [/^闪白 @(\d+)f$/, "Flash @$1f", /^Flash @(\d+)f$/, "闪白 @$1f"],
 ];
+const NUMBERED = /^(.*\S) (\d+)$/;
 
 const translateSegment = (s: string, to: Locale): string => {
   const dict = to === "en" ? LABELS_ZH_EN : LABELS_EN_ZH;
@@ -525,6 +516,8 @@ const translateSegment = (s: string, to: Locale): string => {
     if (to === "en" && zhRe.test(s)) return s.replace(zhRe, enOut);
     if (to === "zh" && enRe.test(s)) return s.replace(enRe, zhOut);
   }
+  const m = NUMBERED.exec(s);
+  if (m && dict[m[1]]) return `${dict[m[1]]} ${m[2]}`;
   return s;
 };
 
@@ -553,6 +546,3 @@ export const themeLabel = (label: string): string => {
   if (parts.length === 2) return useLocale.getState().locale === "zh" ? parts[0] : parts[1];
   return tx(label);
 };
-
-// 模块加载完（STRINGS 已定义）再写 <html lang> 与 document.title
-if (typeof document !== "undefined") applyToDocument(useLocale.getState().locale);

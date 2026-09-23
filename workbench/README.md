@@ -33,7 +33,8 @@ cd workbench && npm install && npm run dev      # http://localhost:5198
 - **界面语言**：默认英文，顶栏右侧按钮切换中文（与画廊同款约定：按钮显示目标语言，选择记在
   localStorage `shotcraft-workbench-locale`）。界面 chrome 走 `src/i18n.ts` 的字符串表；卡片名 /
   schema 字段名 / 分类 / 轨道名 / 清单里的镜头标签照原文写，展示时按同文件的 zh→en 词典翻译，查不到原样显示；
-  demo 卡的英文名与一句话由 gen-index 直接取画廊数据（`nameEn` / `summaryEn`）。加界面文案两种语言都要写；
+  demo 卡的英文名与一句话由 gen-index 直接取画廊数据（`nameEn` / `summaryEn`）；主题预设名写成「中文 · English」
+  按语言取半段。加界面文案两种语言都要写；
   改原生卡或模板清单的中文标签要同步词典
 - **导出成片**：顶栏「导出成片」→ dev server 内起 Remotion CLI 渲当前工程为 MP4 → `exports/`
 - **Remotion Studio**：`npm run studio`（每张卡 Zod schema 自动生成；`ProjImported` / `ProjOriginal` 对照）

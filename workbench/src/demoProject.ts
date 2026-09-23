@@ -24,10 +24,10 @@ export const demoProject = (): ProjectData => {
         id: uid("track"),
         name: t("track.shots"),
         clips: [
-          clip("inkpress-title-card", 0, 55, { text: "Every shot, *tuned* in one place." }, t("demo.titleCard")),
-          clip("demo:CounterConfetti", 55, 138, {}, t("demo.counter")),
-          clip("demo:CrashImpactReal", 193, 120, {}, t("demo.crash")),
-          clip("inkpress-title-card", 313, 55, { text: "Drag a card. *Tweak* it. Export." }, t("demo.titleCard")),
+          clip("inkpress-title-card", 0, 55, { text: "Every shot, *tuned* in one place." }),
+          clip("demo:CounterConfetti", 55, 138),
+          clip("demo:CrashImpactReal", 193, 120),
+          clip("inkpress-title-card", 313, 55, { text: "Drag a card. *Tweak* it. Export." }),
         ],
       },
       {

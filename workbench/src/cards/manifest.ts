@@ -77,6 +77,7 @@ export type WorkbenchManifest = {
 export type ManifestTheme = {
   palette?: Record<string, string>;
   id: string;
+  /** 建议写成「中文 · English」：工作台按界面语言取对应半段；单段名走 i18n 词典，查不到原样显示 */
   label: string;
   background?: string;
   unitDefaults?: Record<string, Record<string, unknown>>;

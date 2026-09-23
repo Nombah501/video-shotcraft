@@ -146,7 +146,6 @@ for (const d of demos) {
     nameEn,
     card: cardZh,
     category: lib.categories?.[catKey]?.zh ?? catKey,
-    categoryEn: lib.categories?.[catKey]?.en ?? catKey,
     categoryKey: catKey,
     styleKey: style?.key,
     preview,
@@ -165,7 +164,7 @@ writeFileSync(
   join(wb, "src/cards/demoMeta.ts"),
   banner +
     "// demo 组件名 → 中文名 / 所属镜头卡 / 画廊分类 / 预览视频（gallery/media 本地已拉取时）/ 一句话\n" +
-    `export type DemoMeta = { name: string; nameEn: string; card: string; category: string; categoryEn: string; categoryKey: string; styleKey?: string; preview?: string; summary?: string; summaryEn?: string };\n` +
+    `export type DemoMeta = { name: string; nameEn: string; card: string; category: string; categoryKey: string; styleKey?: string; preview?: string; summary?: string; summaryEn?: string };\n` +
     `export const DEMO_META: Record<string, DemoMeta> = ${JSON.stringify(meta, null, 2)};\n\n` +
     `/** 画廊分类（中文，按画廊顺序），只含有 demo 的分类 */\nexport const DEMO_CATEGORIES: string[] = ${JSON.stringify(categories)};\n` +
     `/** 分类中文名 → 英文名（i18n 词典合并用，英文界面按此显示分类） */\nexport const DEMO_CATEGORY_EN: Record<string, string> = ${JSON.stringify(categoryEn)};\n`,
