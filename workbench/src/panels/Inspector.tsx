@@ -5,6 +5,7 @@ import { CARDS } from "../cards/registry";
 import { findClip, useStore } from "../store";
 import { MANIFEST } from '../cards/projectCards';
 import { themedProps } from '../theme';
+import { cardName, tx, useT, useTx } from "../i18n";
 
 /** 单个属性控件：按 schema 字段类型渲染 */
 const PropControl: React.FC<{
@@ -92,7 +93,7 @@ const PropControl: React.FC<{
         >
           {field.options.map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {tx(o.label)}
             </option>
           ))}
         </select>
@@ -119,6 +120,8 @@ const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, ch
 );
 
 export const Inspector: React.FC = () => {
+  const t = useT();
+  const tx = useTx();
   const project = useStore((s) => s.project);
   const selectedClipId = useStore((s) => s.selectedClipId);
   const updateClip = useStore((s) => s.updateClip);
@@ -133,18 +136,18 @@ export const Inspector: React.FC = () => {
   if (!hit) {
     return (
       <div className="inspector">
-        <div className="panel-title">属性</div>
+        <div className="panel-title">{t("insp.title")}</div>
         <div className="inspector-empty dim">
-          选中时间轨上的片段后，
+          {t("insp.empty1")}
           <br />
-          在这里调整它的文字、颜色、
+          {t("insp.empty2")}
           <br />
-          动画节奏、变速与图层属性。
+          {t("insp.empty3")}
           <br />
           <br />
-          快捷键：空格 播放 · S 分割
+          {t("insp.shortcuts1")}
           <br />
-          Delete 删除 · ⌘Z 撤销 · ⌘D 复制
+          {t("insp.shortcuts2")}
         </div>
       </div>
     );
@@ -168,18 +171,18 @@ export const Inspector: React.FC = () => {
   return (
     <div className="inspector">
       <div className="panel-title">
-        {card?.name ?? clip.cardId}
+        {card ? cardName(card) : clip.cardId}
         <span className="dim" style={{ marginLeft: 8, fontWeight: 400 }}>
-          {track.name}
+          {tx(track.name)}
         </span>
       </div>
 
       <div className="inspector-scroll">
         {card && card.schema.length > 0 && (
           <section>
-            <div className="sec-title">内容与样式</div>
+            <div className="sec-title">{t("insp.contentStyle")}</div>
             {card.schema.map((field) => (
-              <Row key={field.key} label={field.label}>
+              <Row key={field.key} label={tx(field.label)}>
                 <PropControl
                   field={field}
                   value={themedProps(MANIFEST, card, project.themeId, clip.props, project.themeColors)[field.key] ?? field.default}
@@ -192,8 +195,8 @@ export const Inspector: React.FC = () => {
         )}
 
         <section>
-          <div className="sec-title">时间与变速</div>
-          <Row label="起点">
+          <div className="sec-title">{t("insp.timing")}</div>
+          <Row label={t("insp.start")}>
             <span className="ctl-row">
               <input
                 type="number"
@@ -208,7 +211,7 @@ export const Inspector: React.FC = () => {
               <span className="unit">s</span>
             </span>
           </Row>
-          <Row label="时长">
+          <Row label={t("insp.duration")}>
             <span className="ctl-row">
               <input
                 type="number"
@@ -225,7 +228,7 @@ export const Inspector: React.FC = () => {
               <span className="unit">s</span>
             </span>
           </Row>
-          <Row label="变速">
+          <Row label={t("insp.speed")}>
             <span className="ctl-row">
               <input
                 type="range"
@@ -255,7 +258,7 @@ export const Inspector: React.FC = () => {
               ))}
             </span>
           </Row>
-          <Row label="裁入点">
+          <Row label={t("insp.inPoint")}>
             <span className="ctl-row">
               <input
                 type="number"
@@ -276,7 +279,7 @@ export const Inspector: React.FC = () => {
             <Row label="">
               <button
                 className="mini"
-                title="时长恢复为卡片原始时长（按当前变速换算）"
+                title={t("insp.restore.title")}
                 onClick={() => {
                   begin();
                   updateClip(clip.id, {
@@ -287,21 +290,20 @@ export const Inspector: React.FC = () => {
                   });
                 }}
               >
-                ↺ 恢复原始时长
+                {t("insp.restore")}
               </button>
             </Row>
           )}
           {fpsMismatch && (
             <div className="dim" style={{ fontSize: 11, lineHeight: 1.5, padding: "4px 0 2px" }}>
-              此卡按 {srcFps}fps 编排，工程 {fps}fps：上轨时已换算时长并以 {(srcFps / fps).toFixed(2)}× 变速保持节奏。
-              卡内若按 useVideoConfig().fps 计时（spring 等），节奏仍会偏 {(fps / srcFps).toFixed(2)}×。
+              {t("insp.fpsMismatch", { src: srcFps, fps, ratio: (srcFps / fps).toFixed(2), inv: (fps / srcFps).toFixed(2) })}
             </div>
           )}
         </section>
 
         <section>
-          <div className="sec-title">图层</div>
-          <Row label="不透明度">
+          <div className="sec-title">{t("insp.layer")}</div>
+          <Row label={t("insp.opacity")}>
             <span className="ctl-row">
               <input
                 type="range"
@@ -315,7 +317,7 @@ export const Inspector: React.FC = () => {
               <span className="slider-val">{Math.round(clip.opacity * 100)}%</span>
             </span>
           </Row>
-          <Row label="缩放">
+          <Row label={t("insp.scale")}>
             <span className="ctl-row">
               <input
                 type="range"
@@ -329,7 +331,7 @@ export const Inspector: React.FC = () => {
               <span className="slider-val">{clip.scale.toFixed(2)}</span>
             </span>
           </Row>
-          <Row label="位移 X">
+          <Row label={t("insp.x")}>
             <span className="ctl-row">
               <input
                 type="number"
@@ -341,7 +343,7 @@ export const Inspector: React.FC = () => {
               <span className="unit">px</span>
             </span>
           </Row>
-          <Row label="位移 Y">
+          <Row label={t("insp.y")}>
             <span className="ctl-row">
               <input
                 type="number"
@@ -357,7 +359,7 @@ export const Inspector: React.FC = () => {
 
         <section>
           <button className="btn danger" onClick={() => removeClip(clip.id)}>
-            删除片段
+            {t("insp.deleteClip")}
           </button>
         </section>
       </div>

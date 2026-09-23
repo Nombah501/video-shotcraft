@@ -12,12 +12,13 @@ import { BGM_LIB, MEDIA_ITEMS, SFX_LIB } from "../mediaManifest";
 import { PROJ_DIR, PROJ_HAS_MANIFEST, PROJ_LINKED } from "../projMeta";
 import { setDragPayload } from "../dnd";
 import { ThemePanel } from './ThemePanel';
+import { cardName, cardSummary, useT, useTx } from "../i18n";
 
 const TABS = [
-  { id: "media", label: "素材" },
-  { id: "cards", label: "动效库" },
-  { id: "sfx", label: "音效" },
-  { id: "themes", label: "主题" },
+  { id: "media", key: "lib.tab.media" },
+  { id: "cards", key: "lib.tab.cards" },
+  { id: "sfx", key: "lib.tab.sfx" },
+  { id: "themes", key: "lib.tab.themes" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -150,6 +151,8 @@ const groupBy = <T,>(items: T[], key: (t: T) => string) => {
 };
 
 export const LibraryPanel: React.FC = () => {
+  const t = useT();
+  const tx = useTx();
   const setPreview = useStore((s) => s.setPreview);
   const [tab, setTab] = useState<TabId>(PROJ_LINKED ? "media" : "cards");
   // 折叠分组默认收起，点击标题展开
@@ -176,7 +179,7 @@ export const LibraryPanel: React.FC = () => {
       draggable
       onDragStart={(e) => setDragPayload(e, payload)}
       onClick={onClick}
-      title={`${name}${title ? `\n${title}` : ""}\n点击预览，拖到时间轨添加`}
+      title={`${name}${title ? `\n${title}` : ""}\n${t("lib.cellHint")}`}
     >
       {children}
       <div className="lib-cell-name">{name}</div>
@@ -187,11 +190,11 @@ export const LibraryPanel: React.FC = () => {
   /** 动效卡网格单元 */
   const CardCell: React.FC<{ card: CardDef }> = ({ card }) => (
     <Cell
-      name={card.name}
-      meta={`${(card.durationInFrames / cardFps(card)).toFixed(1)}s${card.schema.length > 0 ? " · 可调参" : ""}`}
-      title={card.summary}
+      name={cardName(card)}
+      meta={`${(card.durationInFrames / cardFps(card)).toFixed(1)}s${card.schema.length > 0 ? t("lib.tunable") : ""}`}
+      title={cardSummary(card)}
       onClick={() => setPreview({ kind: "card", cardId: card.id })}
-      payload={{ cardId: card.id, label: card.name }}
+      payload={{ cardId: card.id, label: cardName(card) }}
     >
       {card.preview ? <LazyLoopVideo src={`/${card.preview}`} /> : <LazyCardLoop card={card} />}
     </Cell>
@@ -210,7 +213,7 @@ export const LibraryPanel: React.FC = () => {
       draggable
       onDragStart={(e) => setDragPayload(e, payload)}
       onClick={onClick}
-      title={`${name} · 点击预览，拖到时间轨添加`}
+      title={`${name} · ${t("lib.cellHint")}`}
     >
       <span className="lib-dot" style={{ background: dot }} />
       <span className="lib-name">{name}</span>
@@ -251,17 +254,17 @@ export const LibraryPanel: React.FC = () => {
   return (
     <div className="library">
       <div className="lib-tabs">
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <button
-            key={t.id}
-            className={`lib-tab${tab === t.id ? " on" : ""}`}
-            aria-pressed={tab === t.id}
+            key={tb.id}
+            className={`lib-tab${tab === tb.id ? " on" : ""}`}
+            aria-pressed={tab === tb.id}
             onClick={() => {
-              setTab(t.id);
-              if (t.id === 'themes') setPreview(null);
+              setTab(tb.id);
+              if (tb.id === 'themes') setPreview(null);
             }}
           >
-            {t.label}
+            {t(tb.key)}
           </button>
         ))}
       </div>
@@ -273,30 +276,28 @@ export const LibraryPanel: React.FC = () => {
             {MANIFEST ? (
               <button
                 className="btn wide"
-                title={`把成片按 src/workbench.ts 清单拆成镜头 / 转场 / 字幕 / 叠加层 / 音效 / 音乐的多轨工程（可撤销）\n${PROJ_DIR}`}
+                title={t("lib.importFilm.title", { dir: PROJ_DIR })}
                 onClick={() => importProject()}
               >
-                ⇣ 导入成片：{MANIFEST.name}
+                {t("lib.importFilm", { name: MANIFEST.name })}
               </button>
             ) : (
               <div className="lib-cat" style={{ whiteSpace: "normal", lineHeight: 1.5 }}>
-                {PROJ_LINKED
-                  ? `已链接 ${PROJ_DIR}，但工程没有 src/workbench.ts 清单，无法拆解导入（写法见 references/workbench.md）`
-                  : "未接入成片工程。在 workbench/ 目录运行：node scripts/open.mjs <成片工程目录>"}
+                {PROJ_LINKED ? t("lib.linkedNoManifest", { dir: PROJ_DIR }) : t("lib.notLinked")}
               </div>
             )}
 
             {projectCards.length > 0 && (
               <>
-                <div className="lib-cat">成片单元（可再加一份）</div>
+                <div className="lib-cat">{t("lib.filmUnits")}</div>
                 <div className="lib-grid">
                   {projectCards.map((card) => (
                     <Cell
                       key={card.id}
-                      name={card.name}
-                      meta={`${(card.durationInFrames / cardFps(card)).toFixed(1)}s${card.schema.length ? " · 可调参" : ""}`}
+                      name={cardName(card)}
+                      meta={`${(card.durationInFrames / cardFps(card)).toFixed(1)}s${card.schema.length ? t("lib.tunable") : ""}`}
                       onClick={() => setPreview({ kind: "card", cardId: card.id })}
-                      payload={{ cardId: card.id, label: card.name }}
+                      payload={{ cardId: card.id, label: cardName(card) }}
                     >
                       <LazyCardLoop card={card} />
                     </Cell>
@@ -305,7 +306,7 @@ export const LibraryPanel: React.FC = () => {
               </>
             )}
 
-            {projectVisual.length > 0 && <div className="lib-cat">素材文件（工程 public/）</div>}
+            {projectVisual.length > 0 && <div className="lib-cat">{t("lib.mediaFiles")}</div>}
             {groupBy(projectVisual, (m) => m.dir || "/").map(([dir, items]) => (
               <Group key={dir} id={`media:${dir}`} label={dir} count={items.length} defaultOpen={items.length <= 12}>
                 <div className="lib-grid">
@@ -313,7 +314,7 @@ export const LibraryPanel: React.FC = () => {
                     <Cell
                       key={m.file}
                       name={m.name}
-                      meta={m.kind === "video" ? "视频" : "图片"}
+                      meta={m.kind === "video" ? t("lib.video") : t("lib.image")}
                       onClick={() => setPreview({ kind: m.kind, file: m.file, label: m.name })}
                       payload={
                         m.kind === "video"
@@ -336,7 +337,7 @@ export const LibraryPanel: React.FC = () => {
 
         {tab === "cards" &&
           motionGroups.map((g) => (
-            <Group key={g.cat} id={`cat:${g.cat}`} label={g.cat} count={g.cards.length} defaultOpen={g.cat === "工作台"}>
+            <Group key={g.cat} id={`cat:${g.cat}`} label={tx(g.cat)} count={g.cards.length} defaultOpen={g.cat === "工作台"}>
               <div className="lib-grid">
                 {g.cards.map((card) => (
                   <CardCell key={card.id} card={card} />
@@ -348,13 +349,13 @@ export const LibraryPanel: React.FC = () => {
         {tab === "sfx" && (
           <>
             {projectAudio.length > 0 && (
-              <Group id="sfx:proj" label="本片音频（工程 public/）" count={projectAudio.length} defaultOpen>
+              <Group id="sfx:proj" label={t("lib.projectAudio")} count={projectAudio.length} defaultOpen>
                 {projectAudio.map((m) => (
                   <Row
                     key={m.file}
                     dot="#ff9f0a"
                     name={m.name}
-                    meta={usage.has(m.file) ? `片中×${usage.get(m.file)}` : "未用"}
+                    meta={usage.has(m.file) ? t("lib.usedIn", { n: usage.get(m.file) ?? 0 }) : t("lib.unused")}
                     onClick={() => setPreview({ kind: "audio", file: m.file, label: m.name })}
                     payload={audioPayload(m.file, m.name.replace(/\.[^.]+$/, ""), 0.4, 90)}
                   />
@@ -362,7 +363,7 @@ export const LibraryPanel: React.FC = () => {
               </Group>
             )}
             {BGM_LIB.length > 0 && (
-              <Group id="sfx:bgm" label="BGM 备选（assets/audio/bgm）" count={BGM_LIB.length}>
+              <Group id="sfx:bgm" label={t("lib.bgm")} count={BGM_LIB.length}>
                 {BGM_LIB.map((b) => (
                   <Row
                     key={b.file}
@@ -375,7 +376,7 @@ export const LibraryPanel: React.FC = () => {
               </Group>
             )}
             {groupBy(SFX_LIB, (s) => s.cat).map(([cat, items]) => (
-              <Group key={cat} id={`sfx:${cat}`} label={`音效库 · ${cat}`} count={items.length}>
+              <Group key={cat} id={`sfx:${cat}`} label={t("lib.sfxLib", { cat: tx(cat) })} count={items.length}>
                 {items.map((s) => (
                   <Row
                     key={s.file}
@@ -392,12 +393,12 @@ export const LibraryPanel: React.FC = () => {
       </div>
 
       <div className="lib-foot dim">
-        {tab === 'themes' ? '切换主题可撤销 · 随工程自动保存' : <>
-        动效 {motionCards.length} 卡（{motionCards.filter((c) => c.schema.length > 0).length} 张可调参）
-        · 音效库 {SFX_LIB.length}
-        {PROJ_LINKED && PROJ_HAS_MANIFEST ? ` · 成片单元 ${projectCards.length}` : ""}
+        {tab === 'themes' ? t("lib.foot.themes") : <>
+        {t("lib.foot.cards", { n: motionCards.length, m: motionCards.filter((c) => c.schema.length > 0).length })}
+        {t("lib.foot.sfx", { n: SFX_LIB.length })}
+        {PROJ_LINKED && PROJ_HAS_MANIFEST ? t("lib.foot.units", { n: projectCards.length }) : ""}
         <br />
-        点击预览 · 拖拽到时间轨添加
+        {t("lib.foot.hint")}
         </>}
       </div>
     </div>

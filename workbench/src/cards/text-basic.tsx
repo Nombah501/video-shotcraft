@@ -21,7 +21,7 @@ interface Props {
 }
 
 const TextBasic: React.FC<Props> = ({
-  content = "在这里输入文字",
+  content = "Type your text here",
   fontSize = 64,
   color = "#1d1d1f",
   bg = "#ffffff",
@@ -126,7 +126,7 @@ export const textBasicCard: CardDef = {
   accent: "#0a84ff",
   component: TextBasic as React.ComponentType<Record<string, unknown>>,
   schema: [
-    { type: "textarea", key: "content", label: "文字内容", default: "在这里输入文字" },
+    { type: "textarea", key: "content", label: "文字内容", default: "Type your text here" },
     { type: "slider", key: "fontSize", label: "字号", default: 64, min: 16, max: 180, step: 1, unit: "px" },
     { type: "color", key: "color", label: "文字颜色", default: "#1d1d1f" },
     {

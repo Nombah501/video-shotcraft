@@ -38,8 +38,10 @@ export type PropField =
 export interface CardDef {
   themeKey?: string;
   id: string;
-  /** 中文名（面板展示） */
+  /** 名称：卡片 / 清单里的原文，面板展示时经 i18n.tx 按界面语言翻译 */
   name: string;
+  /** 英文名：demo 卡由 gen-index 从画廊数据生成；没有时展示层走 i18n 词典 */
+  nameEn?: string;
   category: string;
   /** "audio"/"video"：媒体卡——不包 TimeRemap（Freeze 会掐死原生播放），
    *  裁入/变速经 props 传入，由卡内 trimBefore/playbackRate 实现；
@@ -69,6 +71,8 @@ export interface CardDef {
   preview?: string;
   /** 一句话说明（素材库 tooltip） */
   summary?: string;
+  /** 英文一句话（demo 卡来自画廊 translations.js 的 stylesEn / cardsEn） */
+  summaryEn?: string;
 }
 
 /** 卡片库（demo / 原生卡）统一按 30fps 编排：durationInFrames 与内部时序都以它为准。

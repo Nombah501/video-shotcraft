@@ -4,6 +4,7 @@ import type { ManifestAudio, WorkbenchManifest } from "./cards/manifest";
 import { manifestKey } from "./cards/manifest";
 import { MANIFEST, cardIdOfUnit, unitsOf } from "./cards/projectCards";
 import { inheritedProps } from './theme';
+import { t } from "./i18n";
 
 const baseClip = (): Omit<ClipData, "id" | "cardId" | "start" | "duration"> => ({
   inOffset: 0, speed: 1, opacity: 1, scale: 1, x: 0, y: 0, props: {},
@@ -71,7 +72,7 @@ export const buildProjectFromManifest = (m: WorkbenchManifest = MANIFEST!): Proj
   };
 
   const order = m.order ?? ["transitions", "captions", "overlays"];
-  const NAMES = { transitions: "转场", captions: "字幕", overlays: "叠加层" } as const;
+  const NAMES = { transitions: t("track.transitions"), captions: t("track.captions"), overlays: t("track.overlays") } as const;
   const upper = order
     .map((k) => unitTrack(k.slice(0, -1) as "transition" | "caption" | "overlay", NAMES[k]))
     .filter((t): t is TrackData => !!t);
@@ -79,9 +80,9 @@ export const buildProjectFromManifest = (m: WorkbenchManifest = MANIFEST!): Proj
   const tracks: TrackData[] = [
     // tracks[0] 为最上层，对应原片 z 序：转场 > 字幕 > 叠加层 > 镜头（缺省序，清单 order 可改）
     ...upper,
-    unitTrack("shot", "镜头")!,
-    ...(m.bgm?.length ? packAudio(m.bgm, "音乐", m.total, m.total) : []),
-    ...(m.sfx?.length ? packAudio(m.sfx, "音效", 90, m.total) : []),
+    unitTrack("shot", t("track.shots"))!,
+    ...(m.bgm?.length ? packAudio(m.bgm, t("track.music"), m.total, m.total) : []),
+    ...(m.sfx?.length ? packAudio(m.sfx, t("track.sfx"), 90, m.total) : []),
   ];
 
   return {

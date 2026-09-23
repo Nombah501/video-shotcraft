@@ -6,6 +6,7 @@ import { Timeline } from "./timeline/Timeline";
 import { resetProject, useStore } from "./store";
 import { seekTo, togglePlay } from "./playerRef";
 import type { ProjectData } from "./types";
+import { useLocale, useT } from "./i18n";
 
 const isEditable = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
@@ -41,6 +42,7 @@ const startSplit = (
 
 /** 导出成片：提交当前工程给 dev server 的 Remotion 渲染任务，轮询进度 */
 const ExportButton: React.FC = () => {
+  const t = useT();
   const [job, setJob] = useState<{
     id: string;
     status: "running" | "done" | "error";
@@ -64,7 +66,7 @@ const ExportButton: React.FC = () => {
     const r = await fetch("/api/export", { method: "POST", body: JSON.stringify({ project }) });
     const j = await r.json();
     if (!r.ok) {
-      window.alert(j.error ?? "导出启动失败");
+      window.alert(j.error ?? t("export.startFailed"));
       return;
     }
     setJob({ id: j.id, status: "running", progress: 0 });
@@ -76,7 +78,7 @@ const ExportButton: React.FC = () => {
   if (job?.status === "running")
     return (
       <button className="btn primary" disabled>
-        导出中 {Math.round(job.progress * 100)}%
+        {t("export.running", { pct: Math.round(job.progress * 100) })}
       </button>
     );
   if (job?.status === "done")
@@ -84,34 +86,36 @@ const ExportButton: React.FC = () => {
       <>
         <button
           className="btn"
-          title="在 Finder 中显示导出的 MP4"
+          title={t("export.revealTitle")}
           onClick={() => fetch(`/api/export/${job.id}/reveal`, { method: "POST" })}
         >
-          ✓ 已导出 · 显示文件
+          {t("export.done")}
         </button>
         <button className="btn primary" onClick={start}>
-          再次导出
+          {t("export.again")}
         </button>
       </>
     );
   if (job?.status === "error")
     return (
       <button className="btn danger" title={job.lastLine} onClick={start}>
-        导出失败 · 重试
+        {t("export.failedRetry")}
       </button>
     );
   return (
     <button
       className="btn primary"
-      title="用 Remotion 渲染当前工程为 MP4（输出到 workbench/exports/）"
+      title={t("export.title")}
       onClick={start}
     >
-      导出成片
+      {t("export.film")}
     </button>
   );
 };
 
 export const App: React.FC = () => {
+  const t = useT();
+  const toggleLocale = useLocale((s) => s.toggleLocale);
   const project = useStore((s) => s.project);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
@@ -170,7 +174,7 @@ export const App: React.FC = () => {
         if (!p || !Array.isArray(p.tracks)) throw new Error("bad format");
         useStore.getState().setProject(p);
       } catch {
-        window.alert("导入失败：不是合法的工程 JSON");
+        window.alert(t("import.invalid"));
       }
     });
   };
@@ -186,21 +190,24 @@ export const App: React.FC = () => {
           spellCheck={false}
         />
         <span style={{ flex: 1 }} />
-        <button className="btn" disabled={!canUndo} onClick={undo} title="撤销（⌘Z）">
-          ↩ 撤销
+        <button className="btn" disabled={!canUndo} onClick={undo} title={t("undo.title")}>
+          {t("undo")}
         </button>
-        <button className="btn" disabled={!canRedo} onClick={redo} title="重做（⇧⌘Z）">
-          ↪ 重做
+        <button className="btn" disabled={!canRedo} onClick={redo} title={t("redo.title")}>
+          {t("redo")}
         </button>
         <span className="tl-sep" />
         <ExportButton />
-        <button className="btn" onClick={exportJson}>导出 JSON</button>
-        <button className="btn" onClick={() => fileRef.current?.click()}>导入</button>
+        <button className="btn" onClick={exportJson}>{t("exportJson")}</button>
+        <button className="btn" onClick={() => fileRef.current?.click()}>{t("import")}</button>
         <button
           className="btn"
-          onClick={() => window.confirm("重置为演示工程？当前内容会被覆盖（可撤销）。") && resetProject()}
+          onClick={() => window.confirm(t("reset.confirm")) && resetProject()}
         >
-          重置示例
+          {t("reset")}
+        </button>
+        <button className="btn" onClick={toggleLocale} title={t("lang.switchTitle")}>
+          {t("lang.switchLabel")}
         </button>
         <input
           ref={fileRef}
@@ -221,7 +228,7 @@ export const App: React.FC = () => {
         </div>
         <div
           className="splitter v"
-          title="拖拽调整素材库宽度"
+          title={t("split.library")}
           onPointerDown={(e) => {
             const start = libW;
             startSplit(e, (dx) => setLibW(clamp(start + dx, 160, 440)));
@@ -230,7 +237,7 @@ export const App: React.FC = () => {
         <PreviewPanel />
         <div
           className="splitter v"
-          title="拖拽调整属性面板宽度"
+          title={t("split.inspector")}
           onPointerDown={(e) => {
             const start = inspW;
             startSplit(e, (dx) => setInspW(clamp(start - dx, 220, 500)));
@@ -243,7 +250,7 @@ export const App: React.FC = () => {
 
       <div
         className="splitter h"
-        title="拖拽调整时间轨高度"
+        title={t("split.timeline")}
         onPointerDown={(e) => {
           const start = tlH;
           startSplit(e, (_dx, dy) => setTlH(clamp(start - dy, 150, 600)));

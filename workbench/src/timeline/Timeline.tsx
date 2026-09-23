@@ -3,6 +3,7 @@ import { projectDuration, useStore } from "../store";
 import { Ruler } from "./Ruler";
 import { ClipView } from "./ClipView";
 import { DRAG_MIME, readDragPayload } from "../dnd";
+import { useT, useTx } from "../i18n";
 
 const HEADER_W = 140;
 
@@ -18,6 +19,8 @@ const PlayheadLine: React.FC = () => {
 };
 
 export const Timeline: React.FC = () => {
+  const t = useT();
+  const tx = useTx();
   const project = useStore((s) => s.project);
   const ppf = useStore((s) => s.pxPerFrame);
   const selectedClipId = useStore((s) => s.selectedClipId);
@@ -120,38 +123,38 @@ export const Timeline: React.FC = () => {
         <button
           className="btn"
           disabled={!selectedClipId}
-          title="在播放头处分割选中片段（S）"
+          title={t("tl.split.title")}
           onClick={() =>
             selectedClipId && splitClip(selectedClipId, useStore.getState().playhead)
           }
         >
-          ✂ 分割
+          {t("tl.split")}
         </button>
         <button
           className="btn"
           disabled={!selectedClipId}
-          title="复制选中片段（⌘D）"
+          title={t("tl.dup.title")}
           onClick={() => selectedClipId && duplicateClip(selectedClipId)}
         >
-          ⧉ 复制
+          {t("tl.dup")}
         </button>
         <button
           className="btn"
           disabled={!selectedClipId}
-          title="删除选中片段（Delete）"
+          title={t("tl.del.title")}
           onClick={() => selectedClipId && removeClip(selectedClipId)}
         >
-          🗑 删除
+          {t("tl.del")}
         </button>
         <span className="tl-sep" />
-        <button className="btn" onClick={addTrack} title="新增一条轨道（加在最上层）">
-          ＋ 轨道
+        <button className="btn" onClick={addTrack} title={t("tl.addTrack.title")}>
+          {t("tl.addTrack")}
         </button>
         <span style={{ marginLeft: "auto" }} />
-        <button className="btn" onClick={fit} title="缩放到适配全部内容">
-          ⤢ 适配
+        <button className="btn" onClick={fit} title={t("tl.fit.title")}>
+          {t("tl.fit")}
         </button>
-        <span className="dim">缩放</span>
+        <span className="dim">{t("tl.zoom")}</span>
         <input
           type="range"
           min={0.3}
@@ -182,30 +185,30 @@ export const Timeline: React.FC = () => {
               <div
                 className="tl-track-head"
                 style={{ width: HEADER_W }}
-                title="按住上下拖动调整轨道层序（上层盖住下层）"
+                title={t("tl.reorder.title")}
                 onPointerDown={onTrackHeadDown(track.id)}
               >
                 <span className="track-grip" aria-hidden>
                   ⋮⋮
                 </span>
-                <span className="track-name" title={track.name}>
-                  {track.name}
+                <span className="track-name" title={tx(track.name)}>
+                  {tx(track.name)}
                 </span>
                 <span className="track-actions">
                   <button
                     className="mini"
-                    title={track.hidden ? "显示轨道" : "隐藏轨道"}
+                    title={track.hidden ? t("tl.showTrack") : t("tl.hideTrack")}
                     onClick={() => toggleTrackHidden(track.id)}
                   >
                     {track.hidden ? "🚫" : "👁"}
                   </button>
                   <button
                     className="mini"
-                    title="删除轨道"
+                    title={t("tl.deleteTrack")}
                     onClick={() => {
                       if (
                         track.clips.length === 0 ||
-                        window.confirm(`删除轨道「${track.name}」及其 ${track.clips.length} 个片段？`)
+                        window.confirm(t("tl.deleteTrack.confirm", { name: tx(track.name), n: track.clips.length }))
                       )
                         removeTrack(track.id);
                     }}

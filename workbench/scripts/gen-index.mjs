@@ -136,19 +136,28 @@ for (const d of demos) {
   if (!style && styles.length === 1 && filesPerSlug.get(d.slug) === 1) style = styles[0];
   const cardZh = i18n.cardsZh?.[d.slug] ?? d.slug;
   const name = style ? (i18n.stylesZh?.[style.key] ?? style.key) : `${cardZh} · ${d.stem}`;
+  // 英文名与画廊英文模式一致：式 key / 卡 slug；英文一句话来自 translations.js（没有就留空，面板回退到中文）
+  const nameEn = style ? style.key : `${d.slug} · ${d.stem}`;
+  const summaryEn = (style && i18n.stylesEn?.[style.key]) || i18n.cardsEn?.[d.slug] || undefined;
   const catKey = card?.category ?? d.category;
   const preview = style && existsSync(join(mediaDir, `${style.key}.mp4`)) ? `${style.key}.mp4` : undefined;
   meta[d.stem] = {
     name,
+    nameEn,
     card: cardZh,
     category: lib.categories?.[catKey]?.zh ?? catKey,
+    categoryEn: lib.categories?.[catKey]?.en ?? catKey,
     categoryKey: catKey,
     styleKey: style?.key,
     preview,
     summary: style?.description ?? card?.summary,
+    summaryEn,
   };
 }
 const catOrder = Object.keys(lib.categories ?? {});
+const categoryEn = Object.fromEntries(
+  [...new Set(demos.map((d) => meta[d.stem].categoryKey))].map((k) => [lib.categories?.[k]?.zh ?? k, lib.categories?.[k]?.en ?? k]),
+);
 const categories = [...new Set(demos.map((d) => meta[d.stem].categoryKey))]
   .sort((a, b) => (catOrder.indexOf(a) + 1 || 99) - (catOrder.indexOf(b) + 1 || 99))
   .map((k) => lib.categories?.[k]?.zh ?? k);
@@ -156,9 +165,10 @@ writeFileSync(
   join(wb, "src/cards/demoMeta.ts"),
   banner +
     "// demo 组件名 → 中文名 / 所属镜头卡 / 画廊分类 / 预览视频（gallery/media 本地已拉取时）/ 一句话\n" +
-    `export type DemoMeta = { name: string; card: string; category: string; categoryKey: string; styleKey?: string; preview?: string; summary?: string };\n` +
+    `export type DemoMeta = { name: string; nameEn: string; card: string; category: string; categoryEn: string; categoryKey: string; styleKey?: string; preview?: string; summary?: string; summaryEn?: string };\n` +
     `export const DEMO_META: Record<string, DemoMeta> = ${JSON.stringify(meta, null, 2)};\n\n` +
-    `/** 画廊分类（中文，按画廊顺序），只含有 demo 的分类 */\nexport const DEMO_CATEGORIES: string[] = ${JSON.stringify(categories)};\n`,
+    `/** 画廊分类（中文，按画廊顺序），只含有 demo 的分类 */\nexport const DEMO_CATEGORIES: string[] = ${JSON.stringify(categories)};\n` +
+    `/** 分类中文名 → 英文名（i18n 词典合并用，英文界面按此显示分类） */\nexport const DEMO_CATEGORY_EN: Record<string, string> = ${JSON.stringify(categoryEn)};\n`,
 );
 
 // —— 素材清单：扫描 public/（成片工程素材经符号链接接入；cardpreviews / sfxlib / bgmlib 单列）——

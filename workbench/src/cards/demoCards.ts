@@ -14,6 +14,7 @@ export const DEMO_CARDS: CardDef[] = DEMO_MODULES.map((m) => {
   return {
     id: `demo:${m.stem}`,
     name: meta?.name ?? m.stem,
+    nameEn: meta?.nameEn ?? m.stem,
     category: meta?.category ?? "动效库",
     durationInFrames: Math.max(2, Math.round(m.duration)),
     component: m.component,
@@ -21,6 +22,7 @@ export const DEMO_CARDS: CardDef[] = DEMO_MODULES.map((m) => {
     accent: "#c58a2a",
     preview: meta?.preview ? `cardpreviews/${meta.preview}` : undefined,
     summary: meta?.summary,
+    summaryEn: meta?.summaryEn,
   };
 });
 
