@@ -1,45 +1,49 @@
 import { create } from "zustand";
-import { DEMO_CATEGORY_EN } from "./cards/demoMeta";
+import { DEMO_CATEGORY_EN, DEMO_TEXT_RU } from "./cards/demoMeta";
 import type { CardDef } from "./cards/types";
 
-/** 工作台界面语言。English 是默认；中文是第二语言。
- *  与画廊同一套约定：localStorage 记住选择，切换按钮显示"目标语言"（en 界面上写 中文，zh 界面上写 EN）。
+/** 工作台界面语言。English 是默认；中文、Русский 可选。
+ *  localStorage 记住选择；顶栏下拉框切换。语言只影响展示，不改写工程数据。
  *
  *  两类文案两套机制：
  *  - 界面 chrome（按钮 / 提示 / 弹窗 / 面板标题）：`t(key)` 查 STRINGS 表，键名稳定，两种语言都必须有。
  *  - 内容标签（卡片名 / schema 字段名 / 分类 / 轨道名 / 成片清单里的镜头标签）：卡片和清单里照原文写，
  *    展示时 `tx(text)` 按 LABELS 词典翻译；查不到就原样显示。清单是成片工程自己写的，不强求双语。
- *    demo 卡的英文名 / 英文摘要由 gen-index 直接从画廊数据生成（nameEn / summaryEn），不走词典。 */
-export type Locale = "en" | "zh";
+ *    demo 卡的英文名 / 英文摘要由 gen-index 直接从画廊数据生成（nameEn / summaryEn），俄文由 workbench/i18n/ru/*.json 生成（DEMO_TEXT_RU）。 */
+export type Locale = "en" | "zh" | "ru";
+export const LOCALES: { id: Locale; label: string }[] = [
+  { id: "en", label: "English" },
+  { id: "zh", label: "中文" },
+  { id: "ru", label: "Русский" },
+];
 const STORAGE_KEY = "shotcraft-workbench-locale";
 
 const readSaved = (): Locale => {
   try {
-    return typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY) === "zh" ? "zh" : "en";
+    const v = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    return v === "zh" || v === "ru" ? v : "en";
   } catch {
     return "en";
   }
 };
 /** 只由工作台 App 调用（useEffect）：Remotion Studio / 渲染 bundle 也会加载本模块，不能在这里改页面 */
 export const applyLocaleToDocument = (l: Locale) => {
-  document.documentElement.lang = l === "zh" ? "zh-CN" : "en";
+  document.documentElement.lang = l === "zh" ? "zh-CN" : l;
   document.title = STRINGS[l]["app.title"];
 };
 
-export const useLocale = create<{ locale: Locale; setLocale: (l: Locale) => void; toggleLocale: () => void }>((set, get) => ({
+export const useLocale = create<{ locale: Locale; setLocale: (l: Locale) => void }>((set) => ({
   locale: readSaved(),
   setLocale: (l) => {
     try { localStorage.setItem(STORAGE_KEY, l); } catch { /* 隐私模式等：只在本次会话生效 */ }
     set({ locale: l });
   },
-  toggleLocale: () => get().setLocale(get().locale === "zh" ? "en" : "zh"),
 }));
 
 // —— 界面 chrome ——
 const EN = {
   "app.title": "ShotCraft Workbench · Motion Workbench",
-  "lang.switchTitle": "Switch the interface to Chinese (中文)",
-  "lang.switchLabel": "中文",
+  "lang.title": "Interface language",
 
   "undo": "↩ Undo",
   "undo.title": "Undo (⌘Z)",
@@ -202,8 +206,7 @@ export type StringKey = keyof typeof EN;
 
 const ZH: Record<StringKey, string> = {
   "app.title": "ShotCraft Workbench · 动效工作台",
-  "lang.switchTitle": "切换为英文界面 (English)",
-  "lang.switchLabel": "EN",
+  "lang.title": "界面语言",
 
   "undo": "↩ 撤销",
   "undo.title": "撤销（⌘Z）",
@@ -360,7 +363,168 @@ const ZH: Record<StringKey, string> = {
   "demo.name": "未命名工程",
 };
 
-export const STRINGS: Record<Locale, Record<StringKey, string>> = { en: EN, zh: ZH };
+const RU: Record<StringKey, string> = {
+  "app.title": "ShotCraft Workbench · Монтажный стол",
+  "lang.title": "Язык интерфейса",
+
+  "undo": "↩ Отменить",
+  "undo.title": "Отменить (⌘Z)",
+  "redo": "↪ Повторить",
+  "redo.title": "Повторить (⇧⌘Z)",
+  "export.film": "Экспорт видео",
+  "export.title": "Отрендерить текущий проект в MP4 через Remotion (папка workbench/exports/)",
+  "export.running": "Экспорт {pct}%",
+  "export.done": "✓ Экспортировано · Показать файл",
+  "export.revealTitle": "Показать экспортированный MP4 в Finder",
+  "export.again": "Экспортировать ещё раз",
+  "export.failedRetry": "Ошибка экспорта · Повторить",
+  "export.startFailed": "Не удалось начать экспорт",
+  "exportJson": "Экспорт JSON",
+  "import": "Импорт",
+  "import.invalid": "Не удалось импортировать: файл не является корректным JSON проекта",
+  "reset": "Сбросить пример",
+  "reset.confirm": "Сбросить до демонстрационного проекта? Текущее содержимое будет заменено (можно отменить).",
+  "split.library": "Перетащите, чтобы изменить ширину библиотеки",
+  "split.inspector": "Перетащите, чтобы изменить ширину панели свойств",
+  "split.timeline": "Перетащите, чтобы изменить высоту таймлайна",
+
+  "tl.split": "✂ Разделить",
+  "tl.split.title": "Разделить выбранный клип по указателю воспроизведения (S)",
+  "tl.dup": "⧉ Дублировать",
+  "tl.dup.title": "Дублировать выбранный клип (⌘D)",
+  "tl.del": "🗑 Удалить",
+  "tl.del.title": "Удалить выбранный клип (Delete)",
+  "tl.addTrack": "＋ Дорожка",
+  "tl.addTrack.title": "Добавить дорожку (сверху)",
+  "tl.fit": "⤢ Вписать",
+  "tl.fit.title": "Уместить всё содержимое",
+  "tl.zoom": "Масштаб",
+  "tl.reorder.title": "Перетащите вверх или вниз, чтобы изменить порядок дорожек (верхние перекрывают нижние)",
+  "tl.showTrack": "Показать дорожку",
+  "tl.hideTrack": "Скрыть дорожку",
+  "tl.deleteTrack": "Удалить дорожку",
+  "tl.deleteTrack.confirm": "Удалить дорожку «{name}» и её клипы ({n})?",
+
+  "insp.title": "Свойства",
+  "insp.empty1": "Выберите клип на таймлайне,",
+  "insp.empty2": "чтобы настроить текст, цвета,",
+  "insp.empty3": "ритм анимации, скорость и слой.",
+  "insp.shortcuts1": "Клавиши: Пробел — воспроизведение · S — разделить",
+  "insp.shortcuts2": "Delete — удалить · ⌘Z — отменить · ⌘D — дублировать",
+  "insp.contentStyle": "Содержимое и стиль",
+  "insp.timing": "Время и скорость",
+  "insp.start": "Начало",
+  "insp.duration": "Длительность",
+  "insp.speed": "Скорость",
+  "insp.inPoint": "Точка входа",
+  "insp.restore": "↺ Исходная длительность",
+  "insp.restore.title": "Вернуть исходную длительность карточки (с учётом текущей скорости)",
+  "insp.fpsMismatch":
+    "Карточка рассчитана на {src} fps, а проект — на {fps} fps: длительность пересчитана, скорость {ratio}× сохраняет темп. Если карточка считает время через useVideoConfig().fps (spring и т. п.), темп всё равно смещается в {inv}×.",
+  "insp.layer": "Слой",
+  "insp.opacity": "Непрозрачность",
+  "insp.scale": "Масштаб",
+  "insp.x": "Смещение X",
+  "insp.y": "Смещение Y",
+  "insp.deleteClip": "Удалить клип",
+
+  "lib.tab.media": "Медиа",
+  "lib.tab.cards": "Анимация",
+  "lib.tab.sfx": "Звук",
+  "lib.tab.themes": "Темы",
+  "lib.cellHint": "Нажмите для предпросмотра, перетащите на таймлайн",
+  "lib.tunable": " · настраиваемая",
+  "lib.importFilm": "⇣ Импортировать видео: {name}",
+  "lib.importFilm.title":
+    "Разобрать видео по манифесту src/workbench.ts на дорожки: планы / переходы / субтитры / слои / SFX / музыка (можно отменить)\n{dir}",
+  "lib.linkedNoManifest":
+    "Проект {dir} подключён, но в нём нет манифеста src/workbench.ts, поэтому разобрать его для импорта нельзя (см. references/workbench.md)",
+  "lib.notLinked": "Видеопроект не подключён. В каталоге workbench/ выполните: node scripts/open.mjs <каталог проекта>",
+  "lib.filmUnits": "Элементы видео (добавить ещё экземпляр)",
+  "lib.mediaFiles": "Медиафайлы (public/ проекта)",
+  "lib.video": "Видео",
+  "lib.image": "Изображение",
+  "lib.projectAudio": "Аудио проекта (public/)",
+  "lib.usedIn": "В видео ×{n}",
+  "lib.unused": "Не используется",
+  "lib.bgm": "Варианты BGM (assets/audio/bgm)",
+  "lib.sfxLib": "Библиотека SFX · {cat}",
+  "lib.foot.themes": "Смену темы можно отменить · сохраняется вместе с проектом",
+  "lib.foot.cards": "Анимаций: {n} (настраиваемых: {m})",
+  "lib.foot.sfx": " · библиотека SFX: {n}",
+  "lib.foot.units": " · элементов видео: {n}",
+  "lib.foot.hint": "Нажмите для предпросмотра · перетащите на таймлайн",
+
+  "prev.audioCard": "🔊 Аудиокарточка",
+  "prev.tag": "Предпросмотр",
+  "prev.dragHint": "Перетащите медиа на таймлайн, чтобы добавить",
+  "prev.back": "✕ Вернуться к проекту",
+  "prev.toStart": "В начало",
+  "prev.playPause": "Воспроизвести / пауза (Пробел)",
+  "prev.loop": "Повтор",
+
+  "theme.aria": "Тема видео",
+  "theme.presets": "Готовые темы",
+  "theme.hint": "Выберите стиль, затем настройте цвета.",
+  "theme.none": "В этом проекте пока нет тем.",
+  "theme.mine": "Мои темы",
+  "theme.delete.aria": "Удалить {name}",
+  "theme.deleted": "Удалена тема «{name}»",
+  "theme.applied": "Применена тема «{name}»",
+  "theme.editor": "Заменить палитру",
+  "theme.reset": "Сбросить тему",
+  "theme.name.aria": "Название палитры",
+  "theme.name.placeholder": "Название палитры (необязательно)",
+  "theme.save": "Сохранить палитру",
+  "theme.import": "Импортировать палитру",
+  "theme.export": "Экспортировать палитру",
+  "theme.file.aria": "Импортировать файл палитры",
+  "theme.limit": "Сохранено 50 палитр. Сначала удалите неиспользуемые.",
+  "theme.saved": "Палитра «{name}» сохранена (только в этом браузере).",
+  "theme.saveFailed": "Не удалось сохранить: хранилище браузера недоступно. Экспортируйте палитру как резервную копию.",
+  "theme.exported": "Палитра экспортирована в JSON.",
+  "theme.tooBig": "Файл палитры должен быть меньше 64 КБ.",
+  "theme.imported": "Импортировано и применено. Нажмите «Сохранить палитру», чтобы добавить её в «Мои темы».",
+  "theme.importFailed": "Не удалось импортировать.",
+  "theme.customized": "Изменено · ",
+  "theme.clickHint": "Нажмите на цвет или введите HEX · ",
+  "theme.switchResets": "смена темы сбрасывает палитру",
+  "theme.note": "Применяется к предпросмотру и экспорту, можно отменить. Цвета, настроенные в отдельных клипах, сохраняются.",
+  "theme.paperNote": "Бумажная тема сохраняет фактуру исходных снимков. Выберите другую тему, чтобы настроить всю палитру.",
+  "theme.noPalette": "Появится здесь, когда проект предоставит настраиваемую палитру.",
+  "theme.pick.aria": "{label}: выбор цвета",
+  "theme.hex.aria": "{label}: HEX-значение",
+  "theme.field.page": "Фон",
+  "theme.field.surface": "Карточка",
+  "theme.field.text": "Текст",
+  "theme.field.muted": "Вторичный текст",
+  "theme.field.accent": "Акцент",
+  "theme.field.field": "Светлая заливка",
+  "theme.field.border": "Граница",
+
+  "palette.custom": "Своя",
+  "palette.needTheme": "Сначала выберите тему с поддержкой палитр.",
+  "palette.tooBig": "Файл палитры слишком большой; выберите JSON меньше 64 КБ.",
+  "palette.badJson": "Файл содержит некорректный JSON.",
+  "palette.badFormat": "Неверный формат файла палитры.",
+  "palette.badVersion": "Выберите JSON палитры, экспортированный из ShotCraft (версия 1).",
+  "palette.badTheme": "Этот проект не поддерживает базовую тему палитры.",
+  "palette.noColors": "В палитре нет поля colors.",
+  "palette.badColors": "Нужны все цвета в формате #RRGGBB.",
+
+  "track.transitions": "Переходы",
+  "track.captions": "Субтитры",
+  "track.overlays": "Слои",
+  "track.shots": "Планы",
+  "track.music": "Музыка",
+  "track.sfx": "SFX",
+  "track.background": "Фон",
+  "track.new": "Дорожка {n}",
+
+  "demo.name": "Проект без названия",
+};
+
+export const STRINGS: Record<Locale, Record<StringKey, string>> = { en: EN, zh: ZH, ru: RU };
 
 const fill = (s: string, params?: Record<string, string | number>) =>
   params ? s.replace(/\{(\w+)\}/g, (m, k) => (k in params ? String(params[k]) : m)) : s;
@@ -499,29 +663,148 @@ const LABELS_ZH_EN: Record<string, string> = {
   "复古牛皮纸": "Vintage kraft",
   ...DEMO_CATEGORY_EN,
 };
-const LABELS_EN_ZH: Record<string, string> = Object.fromEntries(
-  Object.entries(LABELS_ZH_EN).map(([zh, en]) => [en, zh]),
-);
-// 带数字的标签：「轨道 3」「音效 2」「Track 3」「SFX 2」→ 前缀查词典、数字照抄；闪白转场标签单独一条
-const PATTERNS: [RegExp, string, RegExp, string][] = [
-  [/^闪白 @(\d+)f$/, "Flash @$1f", /^Flash @(\d+)f$/, "闪白 @$1f"],
-];
+const LABELS_ZH_RU: Record<string, string> = {
+  "工作台": "Встроенные",
+  "成片单元": "Элементы видео",
+  "音频": "Аудио",
+  "素材": "Медиа",
+  "背景": "Фон",
+  "动效库": "Библиотека анимации",
+  "转场": "Переходы",
+  "字幕": "Субтитры",
+  "叠加层": "Слои",
+  "镜头": "Планы",
+  "音乐": "Музыка",
+  "音效": "SFX",
+  "轨道": "Дорожка",
+  "组件": "Компонент",
+  "通用文字": "Текст",
+  "视频素材": "Видеоклип",
+  "图片素材": "Изображение",
+  "纸底": "Бумага",
+  "暖白": "Тёплый белый",
+  "纯白": "Чистый белый",
+  "墨黑": "Чернильный чёрный",
+  "中心提亮": "Свечение в центре",
+  "字卡": "Титр",
+  "解说字幕条": "Полоса субтитров",
+  "暖白闪转场": "Тёплая вспышка-переход",
+  "底色": "Цвет заливки",
+  "亮斑强度": "Сила свечения",
+  "文字内容": "Текст",
+  "字号": "Размер шрифта",
+  "文字颜色": "Цвет текста",
+  "字重": "Насыщенность",
+  "常规 400": "Обычный 400",
+  "半粗 600": "Полужирный 600",
+  "加粗 700": "Жирный 700",
+  "特粗 900": "Сверхжирный 900",
+  "字距": "Межбуквенный интервал",
+  "对齐": "Выравнивание",
+  "左对齐": "По левому краю",
+  "居中": "По центру",
+  "右对齐": "По правому краю",
+  "入场动画": "Анимация появления",
+  "淡入上浮": "Появление снизу",
+  "砸出": "Удар",
+  "遮罩揭示": "Раскрытие маской",
+  "打字机": "Печатная машинка",
+  "纯淡入": "Проявление",
+  "无": "Нет",
+  "入场延迟": "Задержка",
+  "动画时长": "Длительность анимации",
+  "背景色": "Цвет фона",
+  "透明背景": "Прозрачный фон",
+  "文件（public/ 下）": "Файл (в public/)",
+  "适配": "Вписывание",
+  "完整显示": "Целиком",
+  "铺满裁切": "Заполнить с обрезкой",
+  "静音": "Без звука",
+  "音量": "Громкость",
+  "文案（*词* = 强调）": "Текст (*слово* = акцент)",
+  "文案（*词* = 琥珀强调）": "Текст (*слово* = янтарный акцент)",
+  "副标（等宽小字）": "Подзаголовок (моноширинный)",
+  "副标滚动数字": "Цифры подзаголовка",
+  "墨色": "Чернила",
+  "强调色": "Акцент",
+  "琥珀强调色": "Янтарный акцент",
+  "下划线宽": "Ширина подчёркивания",
+  "文案": "Текст",
+  "解说文案": "Текст субтитров",
+  "底距": "Отступ снизу",
+  "文字色": "Цвет текста",
+  "方点色": "Цвет маркера",
+  "全大写": "Заглавными",
+  "峰值不透明度": "Пиковая непрозрачность",
+  "暖白色": "Тёплый белый",
+  "字标": "Логотип",
+  "字标字号": "Размер логотипа",
+  "眉题（打字机）": "Надзаголовок (печатная машинка)",
+  "眉题字号": "Размер надзаголовка",
+  "悬浮批注": "Плавающая пометка",
+  "上行": "строка 1",
+  "下行（斜体+高亮）": "строка 2 (курсив + выделение)",
+  "批注字号": "Размер пометки",
+  "灰墨（眉题）": "Серые чернила (надзаголовок)",
+  "灰墨": "Серые чернила",
+  "副标灰墨": "Серые чернила подзаголовка",
+  "搜索框输入的词": "Поисковый запрос",
+  "琥珀强调色（光标 / 点击涟漪 / 选中框）": "Янтарный акцент (курсор / волна клика / выделение)",
+  "嵌入接缝色": "Цвет шва",
+  "右上角标题": "Заголовок справа вверху",
+  "右上角副标": "Подзаголовок справа вверху",
+  "右上角眉题": "Надзаголовок справа вверху",
+  "计数器字号": "Размер счётчика",
+  "左栏往期周报（每行：周|日期|标题）": "Прошлые недели (по строке: неделя|дата|заголовок)",
+  "副标": "Подзаголовок",
+  "副标字号": "Размер подзаголовка",
+  "S1 墨线开场 → 全景 → 主角卡": "S1 Чернильная линия → общий план → главная карточка",
+  "字卡① one place": "Титр ① one place",
+  "S3 牌堆 → 发牌 → 搜索筛选": "S3 Стопка → раздача → поиск и фильтр",
+  "S4 详情页宏观特写": "S4 Макроплан страницы деталей",
+  "字卡② Paper Radar": "Титр ② Paper Radar",
+  "S6 论文雷达堆叠": "S6 Стопка Paper Radar",
+  "字卡③ weekly report": "Титр ③ weekly report",
+  "S8 周报自己写自己": "S8 Отчёт пишет себя сам",
+  "字卡④ same page": "Титр ④ same page",
+  "S10 合影组装 → 铅印字标": "S10 Общее фото → логотип высокой печатью",
+  "纸质": "Бумага",
+  "现代浅色": "Современная светлая",
+  "暗黑": "Полночь",
+  "清新鼠尾草": "Шалфей",
+  "珊瑚点缀": "Коралл",
+  "柔和鸢尾": "Ирис",
+  "深海蓝": "Глубокий океан",
+  "黑曜紫": "Обсидиановый фиолетовый",
+  "复古牛皮纸": "Винтажный крафт",
+  ...DEMO_TEXT_RU,
+};
+const TO_ZH: Record<string, string> = {};
+for (const dict of [LABELS_ZH_RU, LABELS_ZH_EN])
+  for (const [zh, other] of Object.entries(dict)) TO_ZH[other] = zh;
+const FROM_ZH: Record<Exclude<Locale, "zh">, Record<string, string>> = { en: LABELS_ZH_EN, ru: LABELS_ZH_RU };
+/** 任意语言的已知标签 → 目标语言；查不到返回 undefined */
+const lookup = (s: string, to: Locale): string | undefined => {
+  const zh = s in LABELS_ZH_EN || s in LABELS_ZH_RU ? s : TO_ZH[s];
+  if (!zh) return undefined;
+  return to === "zh" ? zh : FROM_ZH[to][zh] ?? zh;
+};
+// 带数字的标签：「轨道 3」「音效 2」「Track 3」「Дорожка 3」→ 前缀查词典、数字照抄；闪白转场标签单独一条
+const FLASH: Record<Locale, string> = { zh: "闪白 @$1f", en: "Flash @$1f", ru: "Вспышка @$1f" };
+const FLASH_RE = /^(?:闪白|Flash|Вспышка) @(\d+)f$/;
 const NUMBERED = /^(.*\S) (\d+)$/;
 
 const translateSegment = (s: string, to: Locale): string => {
-  const dict = to === "en" ? LABELS_ZH_EN : LABELS_EN_ZH;
-  const hit = dict[s];
+  const hit = lookup(s, to);
   if (hit) return hit;
-  for (const [zhRe, enOut, enRe, zhOut] of PATTERNS) {
-    if (to === "en" && zhRe.test(s)) return s.replace(zhRe, enOut);
-    if (to === "zh" && enRe.test(s)) return s.replace(enRe, zhOut);
-  }
+  if (FLASH_RE.test(s)) return s.replace(FLASH_RE, FLASH[to]);
   const m = NUMBERED.exec(s);
-  if (m && dict[m[1]]) return `${dict[m[1]]} ${m[2]}`;
+  const prefix = m && lookup(m[1], to);
+  if (prefix) return `${prefix} ${m[2]}`;
   return s;
 };
 
-/** 内容标签按当前语言展示：中文原文 ↔ 英文；查不到原样返回。" · " 复合标签逐段翻译。 */
+/** 内容标签按当前语言展示：中 / 英 / 俄任一已知写法 → 当前语言；查不到原样返回。" · " 复合标签逐段翻译。 */
 export const tx = (s: string | undefined | null): string => {
   if (!s) return "";
   const to = useLocale.getState().locale;
@@ -534,15 +817,26 @@ export const useTx = () => {
   return tx;
 };
 
-/** 卡片名 / 摘要：demo 卡有画廊生成的英文（nameEn / summaryEn），其余走词典 */
-export const cardName = (card: Pick<CardDef, "name" | "nameEn">): string =>
-  useLocale.getState().locale === "en" && card.nameEn ? card.nameEn : tx(card.name);
-export const cardSummary = (card: Pick<CardDef, "summary" | "summaryEn">): string | undefined =>
-  useLocale.getState().locale === "en" ? (card.summaryEn ?? (card.summary ? tx(card.summary) : undefined)) : card.summary;
+/** 卡片名 / 摘要：demo 卡有画廊生成的英文（nameEn / summaryEn）与俄文（DEMO_TEXT_RU），其余走词典 */
+export const cardName = (card: Pick<CardDef, "name" | "nameEn">): string => {
+  const l = useLocale.getState().locale;
+  if (l === "en" && card.nameEn) return card.nameEn;
+  return tx(card.name);
+};
+export const cardSummary = (card: Pick<CardDef, "summary" | "summaryEn">): string | undefined => {
+  const l = useLocale.getState().locale;
+  if (l === "en") return card.summaryEn ?? (card.summary ? tx(card.summary) : undefined);
+  if (l === "ru") return card.summary ? (DEMO_TEXT_RU[card.summary] ?? card.summaryEn ?? card.summary) : undefined;
+  return card.summary;
+};
 
-/** 主题预设名写成「中文 · English」：中文界面取前半，英文界面取后半；单段名走词典 */
+/** 主题预设名写成「中文 · English」：中文界面取前半，英文界面取后半，俄文按中文半段查词典；单段名走词典 */
 export const themeLabel = (label: string): string => {
   const parts = label.split(" · ");
-  if (parts.length === 2) return useLocale.getState().locale === "zh" ? parts[0] : parts[1];
+  if (parts.length === 2) {
+    const l = useLocale.getState().locale;
+    if (l === "ru") return LABELS_ZH_RU[parts[0]] ?? parts[1];
+    return l === "zh" ? parts[0] : parts[1];
+  }
   return tx(label);
 };

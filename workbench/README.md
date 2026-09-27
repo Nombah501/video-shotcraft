@@ -30,12 +30,13 @@ cd workbench && npm install && npm run dev      # http://localhost:5198
 - **成片拆解导入**：按工程 `src/workbench.ts` 清单一键拆成 镜头 / 转场 / 字幕 / 叠加层 / 音乐 /
   音效 的多轨工程，落点与原 `<Sequence>` 逐帧一致（`npm run parity` 可证）
 - **保存**：自动存 localStorage（800ms 防抖），导出/导入工程 JSON，撤销/重做
-- **界面语言**：默认英文，顶栏右侧按钮切换中文（与画廊同款约定：按钮显示目标语言，选择记在
-  localStorage `shotcraft-workbench-locale`）。界面 chrome 走 `src/i18n.ts` 的字符串表；卡片名 /
-  schema 字段名 / 分类 / 轨道名 / 清单里的镜头标签照原文写，展示时按同文件的 zh→en 词典翻译，查不到原样显示；
-  demo 卡的英文名与一句话由 gen-index 直接取画廊数据（`nameEn` / `summaryEn`）；主题预设名写成「中文 · English」
-  按语言取半段。加界面文案两种语言都要写；
-  改原生卡或模板清单的中文标签要同步词典
+- **界面语言**：默认英文，顶栏右侧下拉框切换 English / 中文 / Русский（选择记在
+  localStorage `shotcraft-workbench-locale`）。语言只影响展示，不改写工程 JSON 与轨道名。界面 chrome 走 `src/i18n.ts`
+  的字符串表；卡片名 / schema 字段名 / 分类 / 轨道名 / 清单里的镜头标签照原文写，展示时按同文件的 zh→en / zh→ru
+  词典翻译（中英俄任一写法都能互译），查不到原样显示；demo 卡的英文名与一句话由 gen-index 直接取画廊数据
+  （`nameEn` / `summaryEn`），俄文取 `i18n/ru/*.json`（平铺的「中文原文 → 俄文」，生成 `DEMO_TEXT_RU`）；
+  主题预设名写成「中文 · English」按语言取半段，俄文按中文半段查词典。加界面文案三种语言都要写；
+  改原生卡或模板清单的中文标签要同步两份词典
 - **导出成片**：顶栏「导出成片」→ dev server 内起 Remotion CLI 渲当前工程为 MP4 → `exports/`
 - **Remotion Studio**：`npm run studio`（每张卡 Zod schema 自动生成；`ProjImported` / `ProjOriginal` 对照）
 - **无损校验**：`npm run parity`——退出码 0 一致 / 1 有差异 / 2 无法比对（缺 python3+Pillow），不假绿
@@ -76,7 +77,7 @@ node scripts/open.mjs <dir> --no-open     # 不弹浏览器
 src/
   types.ts                数据模型：Project → Track → Clip（时间量单位=帧）
   store.ts                zustand 状态（撤销栈 / 自动保存 / ?import=project 自动导入）
-  i18n.ts                 界面语言（en 默认 / zh）：chrome 字符串表 + 内容标签 zh→en 词典 + 主题名双语拆分
+  i18n.ts                 界面语言（en 默认 / zh / ru）：chrome 字符串表 + 内容标签 zh→en / zh→ru 词典 + 主题名双语拆分
   projectImport.ts        清单 → 多轨工程（镜头/转场/字幕/叠加层/音乐/音效贪心装箱）
   dnd.ts                  素材库 → 时间轨拖拽协议
   preview/Composition.tsx clip → <Sequence> + TimeRemap(Freeze) / 媒体原生通道 / durationProp 注入

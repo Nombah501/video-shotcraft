@@ -160,6 +160,18 @@ const categoryEn = Object.fromEntries(
 const categories = [...new Set(demos.map((d) => meta[d.stem].categoryKey))]
   .sort((a, b) => (catOrder.indexOf(a) + 1 || 99) - (catOrder.indexOf(b) + 1 || 99))
   .map((k) => lib.categories?.[k]?.zh ?? k);
+// 俄文：workbench/i18n/ru/*.json 是平铺的 { 中文原文: 俄文 }（名称 / 分类 / 一句话），只取本次 demo 用到的条目
+const ruAll = {};
+const ruDir = join(wb, "i18n/ru");
+if (existsSync(ruDir))
+  for (const f of readdirSync(ruDir).filter((n) => n.endsWith(".json")).sort())
+    Object.assign(ruAll, JSON.parse(readFileSync(join(ruDir, f), "utf8")));
+const ruUsed = new Set(categories);
+for (const m of Object.values(meta)) {
+  ruUsed.add(m.name).add(m.card);
+  if (m.summary) ruUsed.add(m.summary);
+}
+const textRu = Object.fromEntries(Object.entries(ruAll).filter(([zh]) => ruUsed.has(zh)));
 writeFileSync(
   join(wb, "src/cards/demoMeta.ts"),
   banner +
@@ -167,7 +179,8 @@ writeFileSync(
     `export type DemoMeta = { name: string; nameEn: string; card: string; category: string; categoryKey: string; styleKey?: string; preview?: string; summary?: string; summaryEn?: string };\n` +
     `export const DEMO_META: Record<string, DemoMeta> = ${JSON.stringify(meta, null, 2)};\n\n` +
     `/** 画廊分类（中文，按画廊顺序），只含有 demo 的分类 */\nexport const DEMO_CATEGORIES: string[] = ${JSON.stringify(categories)};\n` +
-    `/** 分类中文名 → 英文名（i18n 词典合并用，英文界面按此显示分类） */\nexport const DEMO_CATEGORY_EN: Record<string, string> = ${JSON.stringify(categoryEn)};\n`,
+    `/** 分类中文名 → 英文名（i18n 词典合并用，英文界面按此显示分类） */\nexport const DEMO_CATEGORY_EN: Record<string, string> = ${JSON.stringify(categoryEn)};\n` +
+    `/** 中文原文 → 俄文（demo 卡名 / 分类 / 一句话，来自 workbench/i18n/ru/*.json，俄文界面按此显示） */\nexport const DEMO_TEXT_RU: Record<string, string> = ${JSON.stringify(textRu, null, 2)};\n`,
 );
 
 // —— 素材清单：扫描 public/（成片工程素材经符号链接接入；cardpreviews / sfxlib / bgmlib 单列）——
